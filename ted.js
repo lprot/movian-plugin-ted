@@ -183,7 +183,7 @@ new page.Route(plugin.id + ":search:(.*)", function(page, query) {
     scraper(page, BASE_URL + '/talks?q=' + encodeURIComponent(query));
 });
 
-page.Search(plugin.title, logo, function (page, query) {
+page.Searcher(plugin.title, logo, function (page, query) {
     setPageHeader(page, plugin.title);
     scraper(page, BASE_URL + '/talks?q=' + encodeURIComponent(query));
 });
