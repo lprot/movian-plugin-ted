@@ -56,11 +56,12 @@ function trim(str) {
 service.create(plugin.title, plugin.id + ":start", 'video', true, logo);
 
 function appendItem(page, url, title, description, icon) {
-    if (url.match(/m3u8/))
+    if (url.match(/m3u8/)) 
         url = 'hls:' + url;
 
     var link = "videoparams:" + JSON.stringify({
         title: title,
+        icon: icon,
         sources: [{
             url: url
         }],
@@ -76,7 +77,7 @@ function appendItem(page, url, title, description, icon) {
     page.appendItem(link, "video", {
         title: new RichText(title),
         description: description,
-        icon: icon
+        backdrops: [{url: icon}]
     });
 }
 
@@ -123,18 +124,17 @@ function scraper(page, params) {
         var doc = http.request(url + param).toString();
         page.loading = false;
         // 1-icon, 2-duration, 3-speaker, 4-link, 5-title, 6-posted, 7-rated
-        var re = /<div class='media media--sm-v'>[\s\S]*?src="([\s\S]*?)"[\s\S]*?class="thumb__duration">([\s\S]*?)<\/span>[\s\S]*?speaker'>([\s\S]*?)<[\s\S]*?href='([\s\S]*?)'>([\s\S]*?)<\/a>[\s\S]*?<span class='meta__val'>([\s\S]*?)<\/span>[\s\S]*?<span class='meta__val'>([\s\S]*?)<\/span>/g;
+        var re = /<div class='media media--sm-v'>[\s\S]*?src="([\s\S]*?)"[\s\S]*?class="thumb__duration">([\s\S]*?)<\/span>[\s\S]*?speaker'>([\s\S]*?)<[\s\S]*?href='([\s\S]*?)'>([\s\S]*?)<\/a>[\s\S]*?<span class='meta__val'>([\s\S]*?)<\/span>([\s\S]*?)<\/div>/g;
         var match = re.exec(doc);
         while (match) {
+            var genre = match[7].match(/<span class='meta__val'>([\s\S]*?)<\/span>/);  
             page.appendItem(plugin.id + ':talk:' + encodeURIComponent(match[4]) + ':' + encodeURIComponent(trim(match[5])), "video", {
                 title: string.entityDecode(match[3]) + ' - ' + string.entityDecode(trim(match[5])),
-                icon: match[1],
+                backdrops: [{url: match[1]}],
                 duration: match[2],
-                description: new RichText(coloredStr('Speaker: ', orange) + match[3] +
-                    coloredStr('\nTitle: ', orange) + trim(match[5]) +
-                    coloredStr('\nPosted: ', orange) + trim(match[6]) +
-                    coloredStr('\nRated: ', orange) + trim(match[7])
-                )
+                genre: (genre ? trim(genre[1]) : ''),
+                tagline: trim(match[5]),
+                source: new RichText(coloredStr('Posted: ', orange) + trim(match[6]))
             });
             page.entries++;
             match = re.exec(doc);
@@ -166,15 +166,15 @@ new page.Route(plugin.id + ":start", function(page) {
     page.loading = true;
     var doc = http.request(BASE_URL + '/talks').toString();
     page.loading = false;
-    var sort = doc.match(/<optgroup label="Sort by([\s\S]*?)<\/optgroup>/)[1];
+    doc = doc.match(/<optgroup label="Sort by([\s\S]*?)<\/optgroup>/)[1];
     // 1-uri component, 2-title
     var re = /<option value="([\s\S]*?)">([\s\S]*?)<\/option>/g;
-    var match = re.exec(sort);
+    var match = re.exec(doc);
     while (match) {
         page.appendItem(plugin.id + ':index:' + match[1] + ':' + encodeURIComponent(match[2]), "directory", {
             title: match[2]
         });
-        match = re.exec(sort);
+        match = re.exec(doc);
     }
 });
 
