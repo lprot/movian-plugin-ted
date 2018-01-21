@@ -133,7 +133,7 @@ function scraper(page, params) {
                 backdrops: [{url: match[1]}],
                 duration: match[2],
                 genre: (genre ? trim(genre[1]) : ''),
-                tagline: trim(match[5]),
+                tagline: string.entityDecode(trim(match[5])),
                 source: new RichText(coloredStr('Posted: ', orange) + trim(match[6]))
             });
             page.entries++;
